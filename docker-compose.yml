@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  amazon_parser:
+    restart: unless-stopped
+    environment:
+      - DB_USER=
+      - DB_PASS=
+      - DB_ADDR=
+      - DB_PORT=
+      - DB_NAME=
+      - HASH_SALT=
+    build: .
+    ports:
+      - "3000:3000"
