@@ -1,4 +1,4 @@
-# FastAPI MVC Template
+# FastAPI MVC
 
 This template provides a starting point for building web applications using FastAPI and following the Model-View-Controller (MVC) architectural pattern.
 
@@ -32,7 +32,7 @@ The project structure is organized as follows:
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/ViktorViskov/fastapi_mvc_template.git
+    git clone https://github.com/ViktorViskov/fastapi-mvc.git
     ```
 
 2. Install dependencies:
