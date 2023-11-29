@@ -4,12 +4,12 @@ services:
   amazon_parser:
     restart: unless-stopped
     environment:
-      - DB_USER=
-      - DB_PASS=
-      - DB_ADDR=
-      - DB_PORT=
-      - DB_NAME=
-      - HASH_SALT=
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_ADDR=${DB_ADDR}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - HASH_SALT=${HASH_SALT}
     build: .
     ports:
       - "3000:3000"
