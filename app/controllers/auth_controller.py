@@ -34,7 +34,7 @@ class AuthController(BaseController):
         response_success = False
         response_data = {}
         
-        email = self.format_handler.format_email(dto.email)
+        email = self.format_handler.format_string(dto.email)
         password = self.hash_handler.hash_password(dto.password)
         
         if not email:
@@ -66,7 +66,7 @@ class AuthController(BaseController):
         response_success = True
         response_data = {}
         
-        email = self.format_handler.format_email(dto.email)
+        email = self.format_handler.format_string(dto.email)
         password = self.hash_handler.hash_password(dto.password)
         now =  datetime.utcnow()
         
