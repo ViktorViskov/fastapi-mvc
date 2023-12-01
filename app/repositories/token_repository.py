@@ -13,65 +13,44 @@ from .base_repository import DEFAULT_LIMIT
 
 class TokenRepository(BaseRepository):
 
-    def add(self, obj: db.Token) -> int:
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+    def add(self, obj: db.Token) -> int | None:
+        with self.session_maker.begin() as session:
 
-        session.add(obj)
-        session.flush()
-
-        item_id = obj.id
-
-        session.commit()
-        session.close()
-
-        return item_id
+            session.add(obj)
+            session.flush()
+            
+            return obj.id
 
     def delete(self, obj_id: int) -> None:
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
-
-        to_delete = session.query(db.Token).where(
-            db.Token.id == obj_id         
-        ).first()
-        
-        if to_delete:
-            session.delete(to_delete)
-            session.commit()
-
-        session.close()
+        with self.session_maker.begin() as session:
+            to_delete = session.query(db.Token).where(
+                db.Token.id == obj_id         
+            ).first()
+            
+            if to_delete:
+                session.delete(to_delete)
 
     def get_by_id(self, obj_id: int) -> db.Token | None:
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
-
-        item = session.query(db.Token).where(
-            db.Token.id == obj_id          
-        ).first()
-
-        session.close()
-
-        return item
+        with self.session_maker.begin() as session:
+            item = session.query(db.Token).where(
+                db.Token.id == obj_id          
+            ).first()
+            
+            return item
     
     def get_by_user_id(self, user_id: int, limit: int = DEFAULT_LIMIT, offset: int = 0) -> list[db.Token]:
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+        with self.session_maker.begin() as session:
+            objs = session.query(db.Token).where(
+                db.Token.user_id == user_id
+            ).limit(limit).offset(offset).all()
 
-        objs = session.query(db.Token).where(
-            db.Token.user_id == user_id
-        ).limit(limit).offset(offset).all()
-
-        session.close()
-        return objs
+            return objs
     
     def get_by_hash(self, obj_hash: str) -> db.Token | None:
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
+        with self.session_maker.begin() as session:
 
-        item = session.query(db.Token).where(
-            db.Token.hash == obj_hash          
-        ).first()
+            item = session.query(db.Token).where(
+                db.Token.hash == obj_hash          
+            ).first()
 
-        session.close()
-
-        return item
+            return item
