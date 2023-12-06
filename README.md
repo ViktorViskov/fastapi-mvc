@@ -25,6 +25,68 @@ The project structure is organized as follows:
 - **templates:** Holds HTML templates for rendering views.
 - **utils:** Contains utility functions.
 
+```
+├── app
+│   ├── controllers
+│   │   ├── auth_controller.py
+│   │   ├── base_controller.py
+│   │   ├── __init__.py
+│   │   ├── page_controller.py
+│   │   └── user_controller.py
+│   ├── db_init.py
+│   ├── dev.bash
+│   ├── middlewares
+│   │   ├── auth_middleware.py
+│   │   ├── cors_middleware.py
+│   │   ├── __init__.py
+│   │   └── static_middleware.py
+│   ├── models
+│   │   ├── db.py
+│   │   ├── dto.py
+│   │   ├── __init__.py
+│   │   └── other.py
+│   ├── prod.sh
+│   ├── repositories
+│   │   ├── base_repository.py
+│   │   ├── __init__.py
+│   │   ├── token_repository.py
+│   │   └── user_repository.py
+│   ├── routers
+│   │   ├── api_router.py
+│   │   ├── auth_router.py
+│   │   ├── base_router.py
+│   │   ├── error_page_router.py
+│   │   ├── __init__.py
+│   │   ├── private_pages_router.py
+│   │   └── public_pages_router.py
+│   ├── services
+│   │   ├── base_service.py
+│   │   ├── __init__.py
+│   │   ├── token_service.py
+│   │   └── user_service.py
+│   ├── static
+│   ├── templates
+│   │   ├── 403.html
+│   │   ├── 404.html
+│   │   ├── forgot.html
+│   │   ├── login.html
+│   │   ├── main.html
+│   │   ├── private.html
+│   │   └── register.html
+│   ├── utils
+│   │   ├── formating.py
+│   │   ├── hashing.py
+│   │   └── __init__.py
+│   └── web.py
+├── .env
+├── docker-compose.yml
+├── Dockerfile
+├── install_env.sh
+├── LICENSE
+├── README.md
+└── requirements.txt
+```
+
 ## Getting Started
 
 ### Installation
