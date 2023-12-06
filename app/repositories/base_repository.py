@@ -22,7 +22,7 @@ class BaseRepository:
         DB_NAME = getenv("DB_NAME")
         
         connection_string = f"mariadb+pymysql://{USER_NAME}:{USER_PASS}@{DB_ADDR}:{DB_PORT}/{DB_NAME}"
-        self.engine = create_engine(connection_string, echo=False)
+        self.engine = create_engine(connection_string, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
         self.session_maker = sessionmaker(bind=self.engine, expire_on_commit=False)
 
     def create_db(self) -> None:
