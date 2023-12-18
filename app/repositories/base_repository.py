@@ -15,14 +15,7 @@ class BaseRepository:
     session_maker: sessionmaker[Session]
     
     def __init__(self) -> None:
-        USER_NAME = getenv("DB_USER")
-        USER_PASS = getenv("DB_PASS")
-        DB_ADDR = getenv("DB_ADDR")
-        DB_PORT = getenv("DB_PORT")
-        DB_NAME = getenv("DB_NAME")
-        
-        connection_string = f"mariadb+pymysql://{USER_NAME}:{USER_PASS}@{DB_ADDR}:{DB_PORT}/{DB_NAME}"
-        self.engine = create_engine(connection_string, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
+        self.engine = create_engine(getenv("DB_CONNECTION_STRING"), echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
         self.session_maker = sessionmaker(bind=self.engine, expire_on_commit=False)
 
     def create_db(self) -> None:
