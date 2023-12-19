@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  amazon_parser:
+  server:
     restart: unless-stopped
     environment:
       - DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
