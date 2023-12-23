@@ -13,9 +13,11 @@ from .base_repository import BaseRepository
 from .base_repository import DEFAULT_LIMIT
 
 
+Item = db.User
+
 class UserRepository(BaseRepository):
 
-    def add(self, obj: db.User) -> int:
+    def add(self, obj: Item) -> int:
         with self.session_maker.begin() as session:
 
             session.add(obj)
@@ -24,10 +26,10 @@ class UserRepository(BaseRepository):
             return obj.id
 
 
-    def update(self, obj: db.User) -> None:
+    def update(self, obj: Item) -> None:
         with self.session_maker.begin() as session:
-            to_update = session.query(db.User).where(
-                db.User.id == obj.id          
+            to_update = session.query(Item).where(
+                Item.id == obj.id          
             ).first()
 
             if to_update:
@@ -41,31 +43,31 @@ class UserRepository(BaseRepository):
     def delete(self, obj_id: int) -> None:
         with self.session_maker.begin() as session:
             
-            to_delete = session.query(db.User).where(
-                db.User.id == obj_id         
+            to_delete = session.query(Item).where(
+                Item.id == obj_id         
             ).first()
             
             if to_delete:
                 session.delete(to_delete)
         
-    def get(self, limit:int = DEFAULT_LIMIT, offset: int = 0) -> list[db.User]:
+    def get(self, limit:int = DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
         with self.session_maker.begin() as session:
-            objs = session.query(db.User).limit(limit).offset(offset).all()
+            objs = session.query(Item).limit(limit).offset(offset).all()
             
             return objs
 
-    def get_by_id(self, obj_id: int) -> db.User | None:
+    def get_by_id(self, obj_id: int) -> Item | None:
         with self.session_maker.begin() as session:
-            item = session.query(db.User).where(
-                db.User.id == obj_id          
+            item = session.query(Item).where(
+                Item.id == obj_id          
             ).first()
 
             return item
 
-    def get_by_email(self, email: str) -> db.User | None:
+    def get_by_email(self, email: str) -> Item | None:
         with self.session_maker.begin() as session:
-            item = session.query(db.User).where(
-                db.User.email == email          
+            item = session.query(Item).where(
+                Item.email == email          
             ).first()
 
             return item

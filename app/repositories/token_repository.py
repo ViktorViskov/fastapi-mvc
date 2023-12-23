@@ -11,9 +11,11 @@ from .base_repository import BaseRepository
 from .base_repository import DEFAULT_LIMIT
 
 
+Item = db.Token
+
 class TokenRepository(BaseRepository):
 
-    def add(self, obj: db.Token) -> int | None:
+    def add(self, obj: Item) -> int | None:
         with self.session_maker.begin() as session:
 
             session.add(obj)
@@ -23,34 +25,34 @@ class TokenRepository(BaseRepository):
 
     def delete(self, obj_id: int) -> None:
         with self.session_maker.begin() as session:
-            to_delete = session.query(db.Token).where(
-                db.Token.id == obj_id         
+            to_delete = session.query(Item).where(
+                Item.id == obj_id         
             ).first()
             
             if to_delete:
                 session.delete(to_delete)
 
-    def get_by_id(self, obj_id: int) -> db.Token | None:
+    def get_by_id(self, obj_id: int) -> Item | None:
         with self.session_maker.begin() as session:
-            item = session.query(db.Token).where(
-                db.Token.id == obj_id          
+            item = session.query(Item).where(
+                Item.id == obj_id          
             ).first()
             
             return item
     
-    def get_by_user_id(self, user_id: int, limit: int = DEFAULT_LIMIT, offset: int = 0) -> list[db.Token]:
+    def get_by_user_id(self, user_id: int, limit: int = DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
         with self.session_maker.begin() as session:
-            objs = session.query(db.Token).where(
-                db.Token.user_id == user_id
+            objs = session.query(Item).where(
+                Item.user_id == user_id
             ).limit(limit).offset(offset).all()
 
             return objs
     
-    def get_by_hash(self, obj_hash: str) -> db.Token | None:
+    def get_by_hash(self, obj_hash: str) -> Item | None:
         with self.session_maker.begin() as session:
 
-            item = session.query(db.Token).where(
-                db.Token.hash == obj_hash          
+            item = session.query(Item).where(
+                Item.hash == obj_hash          
             ).first()
 
             return item
