@@ -1,32 +1,30 @@
-from fastapi.responses import FileResponse
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
+
+from utils import pages
 
 
-class PageController:
-    templates_path: str
-    
-    def __init__(self) -> None:
-        self.templates_path = "templates"
-        
-    def _read_page(self, name: str) -> FileResponse:
-        return FileResponse(f"{self.templates_path}/{name}")
-    
-    def not_found(self) -> FileResponse:
-        return self._read_page("404.html")
-    
-    def not_authorized(self) -> FileResponse:
-        return self._read_page("403.html")
+router = APIRouter(
+    prefix="",
+    tags=["Pages"],
+    default_response_class=HTMLResponse
+)
 
-    def forgot_password(self) -> FileResponse:
-        return self._read_page("forgot.html")
-    
-    def login(self) -> FileResponse:
-        return self._read_page("login.html")
-    
-    def register(self) -> FileResponse:
-        return self._read_page("register.html")
-    
-    def private(self) -> FileResponse:
-        return self._read_page("private.html")
-    
-    def main(self) -> FileResponse:
-        return self._read_page("main.html")
+# main pages
+@router.get("/")
+def main():
+    return pages.read_page("main.html")
+
+# auth pages
+@router.get("/login")
+def login():
+    return pages.read_page("login.html")
+
+@router.get("/register")
+def register():
+    return pages.read_page("register.html")
+
+# panel pages
+@router.get("/panel")
+def private():
+    return pages.read_page("private.html")

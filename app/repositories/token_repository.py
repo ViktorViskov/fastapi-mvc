@@ -1,58 +1,46 @@
 from datetime import datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import and_
-from sqlalchemy.sql.functions import current_timestamp
-from sqlalchemy.sql.functions import random
+from sqlalchemy import Delete
 
-from models import db
-from .base_repository import BaseRepository
-from .base_repository import DEFAULT_LIMIT
+from models.db import Token
+from db.context import session_maker
 
 
-Item = db.Token
+def add(user_id: int, hash: str, valid_to: datetime) -> Token:
+    with session_maker.begin() as session:
+        token = Token()
+        token.user_id = user_id
+        token.hash = hash
+        token.expired_at = valid_to
 
-class TokenRepository(BaseRepository):
+        session.add(token)
+        session.flush()
+        
+        return token
 
-    def add(self, obj: Item) -> int | None:
-        with self.session_maker.begin() as session:
+def delete(id: int) -> None:
+    with session_maker.begin() as session:
+        session.execute(Delete(Token).where(Token.id == id))
 
-            session.add(obj)
-            session.flush()
-            
-            return obj.id
+def delete_by_user_id(id: int) -> None:
+    with session_maker.begin() as session:
+        session.execute(Delete(Token).where(Token.user_id == id))
 
-    def delete(self, obj_id: int) -> None:
-        with self.session_maker.begin() as session:
-            to_delete = session.query(Item).where(
-                Item.id == obj_id         
-            ).first()
-            
-            if to_delete:
-                session.delete(to_delete)
+def get_by_id(id: int) -> Token | None:
+    with session_maker() as session:
+        return session.query(Token).where(
+            Token.id == id          
+        ).first()
 
-    def get_by_id(self, obj_id: int) -> Item | None:
-        with self.session_maker.begin() as session:
-            item = session.query(Item).where(
-                Item.id == obj_id          
-            ).first()
-            
-            return item
-    
-    def get_by_user_id(self, user_id: int, limit: int = DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
-        with self.session_maker.begin() as session:
-            objs = session.query(Item).where(
-                Item.user_id == user_id
-            ).limit(limit).offset(offset).all()
+def get_by_user_id(user_id: int, limit: int = 1000, offset: int = 0) -> list[Token]:
+    with session_maker() as session:
+        return session.query(Token).where(
+            Token.user_id == user_id
+        ).limit(limit).offset(offset).all()
 
-            return objs
-    
-    def get_by_hash(self, obj_hash: str) -> Item | None:
-        with self.session_maker.begin() as session:
+def get_by_hash(obj_hash: str) -> Token | None:
+    with session_maker() as session:
 
-            item = session.query(Item).where(
-                Item.hash == obj_hash          
-            ).first()
-
-            return item
+        return session.query(Token).where(
+            Token.hash == obj_hash          
+        ).first()

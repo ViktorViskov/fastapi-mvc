@@ -1,4 +1,4 @@
-from repositories import BaseRepository
+from db.context import create_db
 
-r = BaseRepository()
-r.create_db()
+
+create_db()

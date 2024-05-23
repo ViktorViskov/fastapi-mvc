@@ -1,73 +1,52 @@
-from datetime import datetime
-from os import getenv
-from random import randint
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import and_
+from sqlalchemy import Delete
+from sqlalchemy import Update
 from sqlalchemy.sql.functions import current_timestamp
-from sqlalchemy.sql.functions import random
 
-from models import db
-from .base_repository import BaseRepository
-from .base_repository import DEFAULT_LIMIT
+from models.db import User
+from db.context import session_maker
 
 
-Item = db.User
+def add(name: str, surname: str, role: User.Role, email: str, password: str)-> User:
+    with session_maker.begin() as session:
+        user = User()
+        user.name = name
+        user.surname = surname
+        user.role = role
+        user.email = email
+        user.password = password
 
-class UserRepository(BaseRepository):
+        session.add(user)
+        session.flush()
 
-    def add(self, obj: Item) -> int:
-        with self.session_maker.begin() as session:
+        return user
 
-            session.add(obj)
-            session.flush()
+def update(id: int, name: str, surname: str, role: User.Role, email: str, password: str) -> None:
+    with session_maker.begin() as session:
+        session.execute(Update(User).where(User.id == id).values({
+            User.name: name,
+            User.surname: surname,
+            User.role: role,
+            User.email: email,
+            User.password: password,
+            User.updated_at: current_timestamp()
+        }))
 
-            return obj.id
+def delete(id: int) -> None:
+    with session_maker.begin() as session:
+        session.execute(Delete(User).where(User.id == id))
+    
+def get(limit:int = 1000, offset: int = 0) -> list[User]:
+    with session_maker() as session:
+        return session.query(User).limit(limit).offset(offset).all()
 
+def get_by_id(id: int) -> User | None:
+    with session_maker() as session:
+        return session.query(User).where(
+            User.id == id          
+        ).first()
 
-    def update(self, obj: Item) -> None:
-        with self.session_maker.begin() as session:
-            to_update = session.query(Item).where(
-                Item.id == obj.id          
-            ).first()
-
-            if to_update:
-                to_update.name = obj.name
-                to_update.surname = obj.surname
-                to_update.role = obj.role
-                to_update.email = obj.email
-                to_update.password = obj.password
-                to_update.updated_at = current_timestamp()
-
-    def delete(self, obj_id: int) -> None:
-        with self.session_maker.begin() as session:
-            
-            to_delete = session.query(Item).where(
-                Item.id == obj_id         
-            ).first()
-            
-            if to_delete:
-                session.delete(to_delete)
-        
-    def get(self, limit:int = DEFAULT_LIMIT, offset: int = 0) -> list[Item]:
-        with self.session_maker.begin() as session:
-            objs = session.query(Item).limit(limit).offset(offset).all()
-            
-            return objs
-
-    def get_by_id(self, obj_id: int) -> Item | None:
-        with self.session_maker.begin() as session:
-            item = session.query(Item).where(
-                Item.id == obj_id          
-            ).first()
-
-            return item
-
-    def get_by_email(self, email: str) -> Item | None:
-        with self.session_maker.begin() as session:
-            item = session.query(Item).where(
-                Item.email == email          
-            ).first()
-
-            return item
+def get_by_email(email: str) -> User | None:
+    with session_maker.begin() as session:
+        return session.query(User).where(
+            User.email == email          
+        ).first()

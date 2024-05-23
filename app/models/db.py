@@ -1,7 +1,8 @@
+from enum import StrEnum
+
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
-from sqlalchemy import Text
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy.sql.functions import current_timestamp
@@ -21,6 +22,11 @@ class User(Base):
     password = Column("password", String(256))
     updated_at = Column("updated_at", DateTime(), default=current_timestamp())
     created_at = Column("created_at", DateTime(), default=current_timestamp())
+    
+    class Role(StrEnum):
+        ADMIN = "admin"
+        USER = "user"
+        GUEST = "guest"
 
 class Token(Base):
     __tablename__ = 'tokens'

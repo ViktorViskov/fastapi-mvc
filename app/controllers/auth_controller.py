@@ -1,120 +1,93 @@
 from datetime import datetime
+from datetime import timezone
 
+from fastapi import APIRouter
+from fastapi import HTTPException
+from fastapi import status
+from fastapi import Response
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
+from utils import formating
+from utils import validators
+from models import db
 from models import dto
-from models import other
-from .base_controller import BaseController
+from services import user_service
+from services import token_service
 
 
+COOKIES_KEY_NAME = "session_token"
 
-class AuthController(BaseController):
-    cookies_name = "session_token"
-    session_ttl = 3600 * 24 * 7
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
+
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=dto.GetUser)
+def register(user: dto.CreateUser):
     
-    def validate_token(self, token_hash: str) -> bool:      
-        is_valid = True
-        
-        now =  datetime.utcnow()
-        token = self.token_service.get_by_hash(token_hash)
-        
-        if not token:
-            is_valid = False
-            
-        # delete expired token
-        if token and token.expired_at < now:
-            self.token_service.delete(token.id)
-            is_valid = False
-
-        return is_valid
+    email = formating.format_string(user.email)
     
-    def register(self, dto: dto.CreateUser) -> JSONResponse:
-        response_message = ""
-        response_success = False
-        response_data = {}
-        
-        email = self.format_handler.format_string(dto.email)
-        password = self.hash_handler.hash_password(dto.password)
-        
-        if not email:
-            response_message = "Email can not be empty"
-            return self._create_response(response_message, response_success, response_data)
-        
-        if not dto.password:
-            response_message = "Password can not be empty"
-            return self._create_response(response_message, response_success, response_data)
-        
-        exist_user = self.user_service.get_by_email(email)
-        if exist_user:
-            response_message = f"User {email} exist"
-            return self._create_response(response_message, response_success, response_data)
-        
-        self.user_service.create(
-            dto.name,
-            dto.surname,
-            other.Role.USER,
-            email,
-            password
+    if not email:
+        raise HTTPException(
+            detail="Email can not be empty",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
-        response_success = True
+    
+    if not user.password:
+        raise HTTPException(
+            detail="Password can not be empty",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+    
+    exist_user = user_service.get_by_email(email)
+    if exist_user:
+        raise HTTPException(
+            detail=f"User '{email}' exist",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+    
+    return user_service.create(
+        user.name,
+        user.surname,
+        db.User.Role.USER,
+        email,
+        user.password
+    )
 
-        return self._create_response(response_message, response_success, response_data)
+@router.post("/login", status_code=status.HTTP_200_OK, response_model=dto.Token)
+def login(dto: dto.LoginUser, res: Response):
+    email = formating.format_string(dto.email)
+    
+    user = user_service.get_by_email_and_password(email, dto.password)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        
+    # delete all expired users tokens
+    token_service.delete_expired(user.id)
+    
+    # create session
+    token = token_service.create(user.id)
+    token_exp_date: datetime = token.expired_at
+    res.set_cookie(COOKIES_KEY_NAME, token.hash, expires=token_exp_date.replace(tzinfo=timezone.utc))
+    return token
 
-    def login(self, dto: dto.LoginUser) -> JSONResponse:
-        response_message = ""
-        response_success = True
-        response_data = {}
-        
-        email = self.format_handler.format_string(dto.email)
-        password = self.hash_handler.hash_password(dto.password)
-        now =  datetime.utcnow()
-        
-        user = self.user_service.get_by_email_and_pass(email, password)
-        if not user:
-            response_message = "Login or password wrong"
-            response_success = False
-            return self._create_response(response_message, response_success, response_data)
-        
-        # get and delete all expired users tokens
-        user_tokens = self.token_service.get_by_user_id(user.id)
-        self.token_service.delete_expired(user_tokens)
-        
-        # create new token
-        token_hash = self.hash_handler.generate_hash()
-        valid_to = datetime.utcfromtimestamp(now.timestamp() + self.session_ttl)
-        new_token = self.token_service.create(user, token_hash, valid_to)
-        
-        token_expired_at: datetime = new_token.expired_at
-        token_ttl = int(token_expired_at.timestamp() - now.timestamp())
-            
-        response = self._create_response(response_message, response_success, response_data)
-        response.set_cookie(self.cookies_name, new_token.hash, token_ttl)
-            
-        return response
+@router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout( req: Request) -> JSONResponse:
+    token_hash = req.cookies.get(COOKIES_KEY_NAME)
+    
+    if token_hash is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    
+    token_service.delete_by_hash(token_hash)
 
-    def logout(self, req: Request) -> JSONResponse:
-        token_hash = req.cookies.get(self.cookies_name, "")
+@router.get("/validate", response_model=bool)
+def check_session( req: Request, res: Response) -> JSONResponse:
+    token_hash = req.cookies.get(COOKIES_KEY_NAME, "")
+    
+    is_valid = validators.validate_token(token_hash)
+    if is_valid is False:
+        res.delete_cookie(COOKIES_KEY_NAME)
         
-        response_message = "Session not found"
-        response_success = False
-        response_data = {}
+    return is_valid
         
-        token = self.token_service.get_by_hash(token_hash)
-        if token:
-            response_message = ""
-            response_success = True
-            self.token_service.delete(token)
-        
-        return self._create_response(response_message, response_success, response_data)
-
-    def check_session(self, req: Request) -> JSONResponse:
-        token_hash = req.cookies.get(self.cookies_name, "")
-        
-        is_valid = self.validate_token(token_hash)
-        response = JSONResponse(is_valid)
-        
-        if not is_valid:
-            response.delete_cookie(self.cookies_name)
-
-        return response

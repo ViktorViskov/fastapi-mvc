@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 # function for enabling CORS on web server
-def cors_middleware(app: FastAPI):
+def add(app: FastAPI):
     app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

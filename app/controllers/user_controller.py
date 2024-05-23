@@ -1,113 +1,86 @@
-from random import randint
-
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter
+from fastapi import Query
+from fastapi import Path
+from fastapi import HTTPException
 
 from models import db
 from models import dto
-from .base_controller import BaseController
+from services import user_service
+from utils import hashing
 
 
-class UserController(BaseController):
-    def get_all(self, limit: int, offset: int) -> list[db.User]:
-        users = self.user_service.get(limit, offset)
-        return [dto.GetUser(u.id, u.name, u.surname, u.role, u.email) for u in users]
-        
-            
-    def get_by_id(self, id: int) -> db.User | None:
-        return  self.user_service.get_by_id(id)
+router = APIRouter(
+    prefix="/user",
+    tags=["Users"]
+)
+
+@router.get("/", response_model=list[dto.GetUser])
+def get_all(limit: int = Query(1000, gt=0), offset: int = Query(0, ge=0)) -> list[db.User]:
+    return user_service.get(limit, offset)    
+
+@router.get("/{id}", response_model=dto.GetUser)
+def get_by_id(id: int = Path(ge=1)) -> db.User | None:
+    user = user_service.get_by_id(id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    def get_by_email(self, email: str) -> db.User | None:
-        return  self.user_service.get_by_email(email)
+    return user
+
+@router.get("/email/{email}", response_model=dto.GetUser)
+def get_by_email(email: str) -> db.User | None:
+    user = user_service.get_by_email(email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    def get_by_token_hash(self, hash: str) -> db.User | None:
-        user = None
-        
-        token = self.token_service.get_by_hash(hash)
-        if token:
-            user = self.user_service.get_by_id(token.user_id)
-        
-        return user
+    return user
+
+@router.get("/token/{hash}", response_model=dto.GetUser)
+def get_by_token_hash(hash: str) -> db.User | None:
+    user = user_service.get_by_token_hash(hash)      
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    def delete(self, user_id: int) -> JSONResponse:
-        response_message = "User not found"
-        response_success = False
-        response_data = {}
-        
-        user = self.get_by_id(user_id)
-        if user:
-            response_message = f"User {user.email} deleted"
-            response_success = True
-            self.user_service.delete(user)
-        
-        return self._create_response(response_message, response_success, response_data)
+    return user
+
+@router.delete("/{id}", status_code=204)
+def delete(id: int = Path(ge=1)):    
+    user = user_service.get_by_id(id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_service.delete(user.id)
+
+@router.put("/{id}", status_code=204)
+def update(dto: dto.UpdateUser, id: int = Path(ge=1)):
+    user = user_service.get_by_id(id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    def update(self, dto: dto.UpdateUser) -> JSONResponse:
-        response_message = "User not found"
-        response_success = False
-        response_data = {}
-        
-        user = self.user_service.get_by_id(dto.id)
-        
-        if user:
-            user.name = dto.name
-            user.surname = dto.surname
-            
-            user = self.user_service.update(user)
-            
-            response_message = "User updated"
-            response_success = True
-            
-        return self._create_response(response_message, response_success, response_data)
+    user_service.update_name_surname(user.id, dto.name, dto.surname)
+
+@router.put("/password/{id}", status_code=204)
+def update_password(dto: dto.UpdateUserPass, id: int = Path(ge=1)):
+    user = user_service.get_by_id(id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    def update_password(self, dto: dto.UpdateUserPass) -> JSONResponse:
-        response_message = "User not found"
-        response_success = False
-        response_data = {}
-        
-        old_password = self.hash_handler.hash_password(dto.old_password)
-        new_password = self.hash_handler.hash_password(dto.new_password)
-        
-        user = self.user_service.get_by_id(dto.id)
-        if not user:
-            response_message = "User not found"
-            return self._create_response(response_message, response_success, response_data)
-        
-        if not dto.old_password or not dto.new_password:
-            response_message = "Password can not be empty"
-            return self._create_response(response_message, response_success, response_data)
-        
-        if dto.old_password == dto.new_password:
-            response_message = "Passwords can not be same"
-            return self._create_response(response_message, response_success, response_data)
-        
-        if user.password != old_password:
-            response_message = "Password is wrong"
-            return self._create_response(response_message, response_success, response_data)
-        
-        user.password = new_password
-        
-        user = self.user_service.update(user)
-        
-        response_message = "Password updated"
-        response_success = True
-            
-        return self._create_response(response_message, response_success, response_data)
+    if not dto.old_password or not dto.new_password:
+        raise HTTPException(status_code=422, detail="Password can not be empty")
     
-    def reset_password(self, email: str) -> JSONResponse:
-        response_message = "User not found"
-        response_success = False
-        response_data = {}
-        
-        new_password = ""
-        user = self.user_service.get_by_email(email)
-        if user:
-            new_password = str(randint(100000, 999999))
-            print(new_password)
-            
-            user.password = self.hash_handler.hash_password(new_password)
-            self.user_service.update(user)
-            
-            response_message = "Password was reset"
-            response_success = True
-            
-        return self._create_response(response_message, response_success, response_data)
+    if dto.old_password == dto.new_password:
+        raise HTTPException(status_code=422, detail="Passwords can not be same")
+    
+    old_password = hashing.hash_password(dto.old_password)
+    if user.password != old_password:
+        raise HTTPException(status_code=401, detail="Incorrect old password")
+    
+    user_service.update_password(user.id, dto.old_password, dto.new_password)
+    
+@router.post("/password/reset/{id}", status_code=204)
+def reset_password(dto: dto.ResetUserPass):
+    user = user_service.get_by_email(dto.email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_pass = user_service.reset_password(user.id)
+    print(new_pass)
