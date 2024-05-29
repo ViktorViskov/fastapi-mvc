@@ -3,3 +3,5 @@ fastapi
 pymysql
 sqlalchemy
 alembic
+jwt
+apscheduler
