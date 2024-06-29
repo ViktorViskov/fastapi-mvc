@@ -9,3 +9,9 @@ services:
     build: .
     ports:
       - "3000:3000"
+
+  example_2:
+    container_name: example_2
+    restart: unless-stopped
+    network_mode: "host"
+    build: .

@@ -1,4 +1,3 @@
-from os import getenv
 from typing import Generator
 from typing import Any
 
@@ -7,13 +6,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
 from models.db import Base
+from constants import DB_CONNECTION_STRING
 
 
-CONNECTION_STRING = getenv("DB_CONNECTION_STRING")
-if not CONNECTION_STRING:
+if not DB_CONNECTION_STRING:
     raise Exception("DB connection string not providet")
 
-engine = create_engine(CONNECTION_STRING, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
+engine = create_engine(DB_CONNECTION_STRING, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
 session_maker = sessionmaker(bind=engine, expire_on_commit=False)
 
 def create_db() -> None:
@@ -41,10 +40,11 @@ def auto_create_db():
     """
     try:
         con = engine.connect()
+        create_db()
         con.close()
 
     except Exception as _:
-        connection_string, db_name = CONNECTION_STRING.rsplit("/", 1)
+        connection_string, db_name = DB_CONNECTION_STRING.rsplit("/", 1)
 
         tmp_engine = create_engine(connection_string)
         with tmp_engine.begin() as session:

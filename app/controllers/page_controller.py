@@ -1,7 +1,9 @@
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from datetime import datetime
 
-from utils import pages
+from fastapi import APIRouter
+from fastapi.requests import Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 
 router = APIRouter(
@@ -10,21 +12,9 @@ router = APIRouter(
     default_response_class=HTMLResponse
 )
 
-# main pages
+templates = Jinja2Templates(directory="templates")
+
 @router.get("/")
-def main():
-    return pages.read_page("main.html")
-
-# auth pages
-@router.get("/login")
-def login():
-    return pages.read_page("login.html")
-
-@router.get("/register")
-def register():
-    return pages.read_page("register.html")
-
-# panel pages
-@router.get("/panel")
-def private():
-    return pages.read_page("private.html")
+def main(req: Request):
+    now = datetime.now()
+    return templates.TemplateResponse(req, "main.jinja", {"date": now.replace(microsecond=0)})

@@ -9,14 +9,15 @@ from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
 from utils import formating
-from utils import validators
 from models import db
 from models import dto
 from services import user_service
-from services import token_service
+from services import jwt_service
+from utils.bcrypt_hashing import HashLib
+from utils import dependencies
+from constants import COOKIES_KEY_NAME
+from constants import SESSION_TIME
 
-
-COOKIES_KEY_NAME = "session_token"
 
 router = APIRouter(
     prefix="/auth",
@@ -24,8 +25,7 @@ router = APIRouter(
 )
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=dto.GetUser)
-def register(user: dto.CreateUser):
-    
+async def register(user: dto.CreateUser):
     email = formating.format_string(user.email)
     
     if not email:
@@ -55,39 +55,54 @@ def register(user: dto.CreateUser):
         user.password
     )
 
-@router.post("/login", status_code=status.HTTP_200_OK, response_model=dto.Token)
-def login(dto: dto.LoginUser, res: Response):
+@router.post("/login", status_code=status.HTTP_200_OK, response_model=str)
+async def login(dto: dto.LoginUser, res: Response):
+    NOW = datetime.now(timezone.utc)
+    
     email = formating.format_string(dto.email)
     
-    user = user_service.get_by_email_and_password(email, dto.password)
+    user = user_service.get_by_email(email)
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
-        
-    # delete all expired users tokens
-    token_service.delete_expired(user.id)
     
-    # create session
-    token = token_service.create(user.id)
-    token_exp_date: datetime = token.expired_at
-    res.set_cookie(COOKIES_KEY_NAME, token.hash, expires=token_exp_date.replace(tzinfo=timezone.utc))
+    if HashLib.validate(dto.password, user.password) is False:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect password")
+    
+    exp_date = NOW + SESSION_TIME
+    token = jwt_service.encode(user.id, user.role, exp_date)
+    res.set_cookie(COOKIES_KEY_NAME, token, expires=exp_date)
     return token
 
 @router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout( req: Request) -> JSONResponse:
-    token_hash = req.cookies.get(COOKIES_KEY_NAME)
-    
-    if token_hash is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-    
-    token_service.delete_by_hash(token_hash)
+async def logout(res: Response) -> JSONResponse:
+    res.delete_cookie(COOKIES_KEY_NAME)
 
-@router.get("/validate", response_model=bool)
-def check_session( req: Request, res: Response) -> JSONResponse:
-    token_hash = req.cookies.get(COOKIES_KEY_NAME, "")
+@router.get("/validate", response_model=dto.Token)
+async def check_session( req: Request, res: Response) -> JSONResponse:
+    token = req.cookies.get(COOKIES_KEY_NAME, "")
     
-    is_valid = validators.validate_token(token_hash)
-    if is_valid is False:
+    data = jwt_service.decode(token)
+    if data is None:
         res.delete_cookie(COOKIES_KEY_NAME)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token is invalid")
         
-    return is_valid
-        
+    return data
+
+@router.put("/password/update", status_code=204)
+def update_password(dto: dto.UpdateUserPass, user: dependencies.user_dependency):    
+    if dto.old_password == dto.new_password:
+        raise HTTPException(status_code=422, detail="Passwords can not be same")
+    
+    if HashLib.validate(dto.old_password, user.password) is False:
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    
+    user_service.update_password(user.id, dto.new_password)
+    
+@router.post("/password/reset", status_code=204)
+def reset_password(email: str):
+    user = user_service.get_by_email(email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_pass = user_service.reset_password(user.id)
+    print(f"User {user.email} new password: {new_pass}")

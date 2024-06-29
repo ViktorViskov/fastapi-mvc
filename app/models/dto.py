@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from pydantic import BaseModel
+from pydantic import Field
 
 # USER
 class CreateUser(BaseModel):
     name: str
     surname: str
     email: str
-    password: str
+    password: str = Field(..., min_length=4) # For 1 big letter, 1 small letter, 1 number, 1 special character and min 8 characters: pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
 
 class GetUser(BaseModel):
     id: int
@@ -27,16 +28,11 @@ class LoginUser(BaseModel):
     password: str
     
 class UpdateUserPass(BaseModel):
-    old_password: str
-    new_password: str
-
-class ResetUserPass(BaseModel):
-    email: str
+    old_password: str = Field(..., min_length=4)
+    new_password: str = Field(..., min_length=4)
     
 # Token
 class Token(BaseModel):
-    id: int
     user_id: int
-    hash: str
-    created_at: datetime
-    expired_at: datetime
+    role: str
+    exp: datetime

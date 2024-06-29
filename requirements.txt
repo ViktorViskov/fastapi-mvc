@@ -3,5 +3,6 @@ fastapi
 pymysql
 sqlalchemy
 alembic
-jwt
-apscheduler
+pyjwt # jwt 
+apscheduler # cron scheduler
+passlib # bcrypt
