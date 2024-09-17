@@ -6,3 +6,5 @@ alembic
 pyjwt # jwt 
 apscheduler # cron scheduler
 passlib # bcrypt
+bcrypt # bcrypt
+jinja2 # template engine
