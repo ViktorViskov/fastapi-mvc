@@ -1,8 +1,5 @@
-from typing import Generator
-from typing import Any
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
 from models.db import Base
@@ -12,20 +9,11 @@ from utils.config import CONFIG
 engine = create_engine(CONFIG.DB_CONNECTION_STRING, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
 session_maker = sessionmaker(bind=engine, expire_on_commit=False)
 
-def create_db() -> None:
+def create_tables() -> None:
     """
     Creates the database tables by calling `Base.metadata.create_all(engine)`.
     """
     Base.metadata.create_all(engine)
-
-
-def get_db() -> Generator[Session, Any, None]:
-    """
-    Returns a generator that yields a SQLAlchemy session. This session should be used for all database interactions within the current request context.
-    """
-    with session_maker() as session:
-        yield session
-        
 
 def auto_create_db():
     """
@@ -37,7 +25,7 @@ def auto_create_db():
     """
     try:
         con = engine.connect()
-        create_db()
+        create_tables()
         con.close()
 
     except Exception as _:
@@ -47,4 +35,4 @@ def auto_create_db():
         with tmp_engine.begin() as session:
             session.exec_driver_sql(f"CREATE DATABASE `{db_name}`")
 
-        create_db()
+        create_tables()

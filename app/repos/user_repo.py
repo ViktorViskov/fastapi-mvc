@@ -3,7 +3,7 @@ from sqlalchemy import Update
 from sqlalchemy.sql.functions import current_timestamp
 
 from models.db import User
-from db.context import session_maker
+from utils.db_context import session_maker
 
 
 def add(name: str, surname: str, role: User.Role, email: str, password: str)-> User:
