@@ -9,16 +9,16 @@ from utils import formating
 from mappers import user_mapper
 
 
-def get(limit: int, offset: int) -> list[db.User]:
+def get(limit: int, offset: int) -> list[db.UserDb]:
     return user_repo.get(limit=limit, offset=offset)
             
-def get_by_id(id: int) -> db.User | None:
+def get_by_id(id: int) -> db.UserDb | None:
     return user_repo.get_by_id(id)
     
-def get_by_email(email: str) -> db.User | None:
+def get_by_email(email: str) -> db.UserDb | None:
     return user_repo.get_by_email(email.lower().strip())
 
-def create(name: str, surname: str, role: db.User.Role, email: str, password: str) -> dto.GetUser:
+def create(name: str, surname: str, role: db.UserDb.Role, email: str, password: str) -> dto.GetUser:
     name = formating.format_string(name)
     surname = formating.format_string(surname)
     email = formating.format_string(email)
@@ -26,7 +26,7 @@ def create(name: str, surname: str, role: db.User.Role, email: str, password: st
     user = user_repo.add(name, surname, role, email, pass_hash)
     return user_mapper.db_to_get_dto(user)
 
-def update(id: int, name: str, surname: str, role: db.User.Role, email: str, password: str) -> None:
+def update(id: int, name: str, surname: str, role: db.UserDb.Role, email: str, password: str) -> None:
     name = formating.format_string(name)
     surname = formating.format_string(surname)
     email = formating.format_string(email)

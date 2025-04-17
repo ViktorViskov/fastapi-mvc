@@ -12,7 +12,7 @@ from services import user_service
 from services import jwt_service
 
 
-def get_user(req: Request, res: Response) -> db.User:
+def get_user(req: Request, res: Response) -> db.UserDb:
     session_token = req.cookies.get(CONFIG.COOKIES_KEY_NAME)
     if session_token is None:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -31,4 +31,11 @@ def get_user(req: Request, res: Response) -> db.User:
     
     return user
 
-user_dependency = Annotated[db.User, Depends(get_user)]
+def get_admin(user: db.UserDb = Depends(get_user)) -> db.UserDb:
+    if user.role != db.UserDb.Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Forbidden. Not an admin user")
+    
+    return user
+
+user_dependency = Annotated[db.UserDb, Depends(get_user)]
+admin_dependency = Annotated[db.UserDb, Depends(get_admin)]

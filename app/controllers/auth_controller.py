@@ -48,7 +48,7 @@ async def register(user: dto.CreateUser):
     return user_service.create(
         user.name,
         user.surname,
-        db.User.Role.USER,
+        db.UserDb.Role.USER,
         email,
         user.password
     )
