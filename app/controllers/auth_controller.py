@@ -15,8 +15,7 @@ from services import user_service
 from services import jwt_service
 from utils.bcrypt_hashing import HashLib
 from utils import dependencies
-from constants import COOKIES_KEY_NAME
-from constants import SESSION_TIME
+from utils.config import CONFIG
 
 
 router = APIRouter(
@@ -68,22 +67,22 @@ async def login(dto: dto.LoginUser, res: Response):
     if HashLib.validate(dto.password, user.password) is False:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect password")
     
-    exp_date = NOW + SESSION_TIME
+    exp_date = NOW + CONFIG.SESSION_TIME
     token = jwt_service.encode(user.id, user.role, exp_date)
-    res.set_cookie(COOKIES_KEY_NAME, token, expires=exp_date)
+    res.set_cookie(CONFIG.COOKIES_KEY_NAME, token, expires=exp_date)
     return token
 
 @router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(res: Response) -> JSONResponse:
-    res.delete_cookie(COOKIES_KEY_NAME)
+    res.delete_cookie(CONFIG.COOKIES_KEY_NAME)
 
 @router.get("/validate", response_model=dto.Token)
 async def check_session( req: Request, res: Response) -> JSONResponse:
-    token = req.cookies.get(COOKIES_KEY_NAME, "")
+    token = req.cookies.get(CONFIG.COOKIES_KEY_NAME, "")
     
     data = jwt_service.decode(token)
     if data is None:
-        res.delete_cookie(COOKIES_KEY_NAME)
+        res.delete_cookie(CONFIG.COOKIES_KEY_NAME)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token is invalid")
         
     return data

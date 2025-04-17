@@ -6,13 +6,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
 from models.db import Base
-from constants import DB_CONNECTION_STRING
+from utils.config import CONFIG
 
 
-if not DB_CONNECTION_STRING:
-    raise Exception("DB connection string not providet")
-
-engine = create_engine(DB_CONNECTION_STRING, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
+engine = create_engine(CONFIG.DB_CONNECTION_STRING, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour
 session_maker = sessionmaker(bind=engine, expire_on_commit=False)
 
 def create_db() -> None:
@@ -44,7 +41,7 @@ def auto_create_db():
         con.close()
 
     except Exception as _:
-        connection_string, db_name = DB_CONNECTION_STRING.rsplit("/", 1)
+        connection_string, db_name = CONFIG.DB_CONNECTION_STRING.rsplit("/", 1)
 
         tmp_engine = create_engine(connection_string)
         with tmp_engine.begin() as session:

@@ -2,13 +2,13 @@ from time import time
 from hashlib import sha256
 from random import randint
 
-from constants import HASH_SALT
+from utils.config import CONFIG
 
 
 class HashLib:
     @staticmethod
     def hash(password: str) -> str:
-        to_hash = password + HASH_SALT
+        to_hash = password + CONFIG.HASH_SALT
         return sha256(to_hash.encode()).hexdigest()
 
     @staticmethod
@@ -19,5 +19,5 @@ class HashLib:
     def random_hash() -> str:
         random_number = randint(0, 999999)
         timestamp = time()
-        to_hash = f"{timestamp} {random_number} {HASH_SALT}"
+        to_hash = f"{timestamp} {random_number} {CONFIG.HASH_SALT}"
         return sha256(to_hash.encode()).hexdigest()
