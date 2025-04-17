@@ -17,7 +17,7 @@ class GetUser(BaseModel):
     role: str
     email: str
     updated_at: datetime
-    created_at: datetime        
+    created_at: datetime
     
 class UpdateUser(BaseModel):
     name: str
@@ -35,4 +35,3 @@ class UpdateUserPass(BaseModel):
 class Token(BaseModel):
     user_id: int
     role: str
-    exp: datetime

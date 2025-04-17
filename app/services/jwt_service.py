@@ -1,27 +1,27 @@
 from datetime import datetime
-
+from datetime import timezone
 import jwt
 
-from models import db
-from models import dto
 
-  
 SECRET_KEY = "SomeRandomSalt"
 ALGORITHM = "HS256"
 
-def encode(user_id: int, role: db.User.Role, exp: datetime) -> str:
-    token = dto.Token(
-        user_id=user_id,
-        role=role,
-        exp=exp,
-    )
-    return jwt.encode(token.model_dump(), SECRET_KEY, algorithm=ALGORITHM)
+
+def encode(data: dict, exp: datetime) -> str:
+    iat = datetime.now(timezone.utc).replace(tzinfo=None)
+            
+    token_data = {
+        "iat": iat,
+        "exp": exp,
+        "body": data
+    }
     
-def decode(token: str) -> dto.Token | None:
+    return jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode(token: str) -> dict | None:
     try:
-        token_data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return dto.Token(**token_data)
+        data:dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return data.get("body")
     except jwt.PyJWTError as e:
-        # print(e)
+        print(e)
         return None
-    

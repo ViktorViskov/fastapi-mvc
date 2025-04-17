@@ -5,7 +5,6 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi import status
 from fastapi import Response
-from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 
 from utils import formating
@@ -55,29 +54,31 @@ async def register(user: dto.CreateUser):
     )
 
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=str)
-async def login(dto: dto.LoginUser, res: Response):
+async def login(obj: dto.LoginUser, res: Response):
     NOW = datetime.now(timezone.utc)
     
-    email = formating.format_string(dto.email)
+    email = formating.format_string(obj.email)
     
     user = user_service.get_by_email(email)
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
     
-    if HashLib.validate(dto.password, user.password) is False:
+    if HashLib.validate(obj.password, user.password) is False:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect password")
     
     exp_date = NOW + CONFIG.SESSION_TIME
-    token = jwt_service.encode(user.id, user.role, exp_date)
-    res.set_cookie(CONFIG.COOKIES_KEY_NAME, token, expires=exp_date)
-    return token
+    token = dto.Token(user_id=user.id, role=user.role) 
+    token_str = jwt_service.encode(token.model_dump(), exp_date)
+    
+    res.set_cookie(CONFIG.COOKIES_KEY_NAME, token_str, expires=exp_date)
+    return token_str
 
 @router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(res: Response) -> JSONResponse:
+async def logout(res: Response):
     res.delete_cookie(CONFIG.COOKIES_KEY_NAME)
 
 @router.get("/validate", response_model=dto.Token)
-async def check_session( req: Request, res: Response) -> JSONResponse:
+async def check_session( req: Request, res: Response):
     token = req.cookies.get(CONFIG.COOKIES_KEY_NAME, "")
     
     data = jwt_service.decode(token)
