@@ -1,5 +1,5 @@
-from utils.db_context import create_tables
-from utils.db_context import auto_create_db
+from core.db_context import create_tables
+from core.db_context import auto_create_db
 
 
 # create_tables()

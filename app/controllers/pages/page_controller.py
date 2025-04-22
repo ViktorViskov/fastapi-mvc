@@ -1,10 +1,9 @@
-from datetime import datetime
-
 from fastapi import APIRouter
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
+from views import main_view
+from core.dependencies import user_dependency
 
 router = APIRouter(
     prefix="",
@@ -12,9 +11,10 @@ router = APIRouter(
     default_response_class=HTMLResponse
 )
 
-templates = Jinja2Templates(directory="templates")
-
 @router.get("/")
 def main(req: Request):
-    now = datetime.now()
-    return templates.TemplateResponse(req, "main.jinja", {"date": now.replace(microsecond=0)})
+    return main_view.main_page(req)
+
+@router.get("/check")
+def check(req: Request, user: user_dependency):
+    return main_view.auth_page(req, user)

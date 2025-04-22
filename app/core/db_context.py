@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from models.db import Base
-from utils.config import CONFIG
+from core.config import CONFIG
 
 
 engine = create_engine(CONFIG.DB_CONNECTION_STRING, echo=False, pool_pre_ping=True, pool_recycle=3600) #reconect after 1 hour

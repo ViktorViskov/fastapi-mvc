@@ -2,9 +2,9 @@ from models import db
 from models import dto
 
 
-def db_to_get_dto(user_db: db.UserDb) -> dto.GetUser:
+def db_to_get_dto(user_db: db.UserDb) -> dto.UserDTO:
     """Convert a User DB object to a GetUser DTO"""
-    return dto.GetUser(
+    return dto.UserDTO(
         id=user_db.id,
         name=user_db.name,
         surname=user_db.surname,

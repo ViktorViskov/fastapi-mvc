@@ -1,20 +1,33 @@
 from fastapi import FastAPI
 
-from utils import lifespan
-from controllers import auth_controller
-from controllers import page_controller
-from controllers import user_controller
+from core import lifespan
+from controllers.pages import page_controller
+from controllers.api import auth_controller
+from controllers.api import user_controller
 
-from middlewares import cors_middleware
-from middlewares import static_middleware
+from core.middlewares import cors_middleware
+from core.middlewares import static_middleware
+from exceptions import handler
 
+# apps
+app = FastAPI(lifespan=lifespan.lifespan) # jinja2 templates
+api = FastAPI(lifespan=lifespan.lifespan) # api for json
 
-app = FastAPI(lifespan=lifespan.lifespan)
+# custom exception handlers
+handler.add_html(app)
+handler.add_json(api)
 
-cors_middleware.add(app)
+# add middlewares
 static_middleware.add(app)
+cors_middleware.add(api)
 
-app.include_router(auth_controller.router)
+# include page routers
 app.include_router(page_controller.router)
-app.include_router(user_controller.router)
+
+# include api routers
+api.include_router(auth_controller.router)
+api.include_router(user_controller.router)
+
+# mount api app
+app.mount("/api", api)
 
