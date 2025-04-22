@@ -23,55 +23,29 @@ This project is developed using the following technologies:
 
 The project structure is organized as follows:
 
-- **controllers:** Contains the controllers responsible for handling requests and business logic.
-- **db:** Contains the database driver and logic for create database and working with tables.
-- **middlewares:** Houses various middleware for request handling (e.g., static files, CORS).
-- **models:** Stores the application's data models and schemas.
-- **services:** Implements business logic for working with objects.
-- **static:** Contaim static files (Some js library, css, images, etc.).
-- **templates:** Holds HTML templates for rendering views.
-- **utils:** Contains utility functions.
-
 ```
-├── app
-│   ├── constants.py
-│   ├── controllers
-│   │   ├── auth_controller.py
-│   │   ├── page_controller.py
-│   │   └── user_controller.py
-│   ├── db
-│   │   ├── context.py
-│   │   └── user_db.py
-│   ├── db_init.bash
-│   ├── db_init.py
-│   ├── dev.bash
-│   ├── main.py
-│   ├── middlewares
-│   │   ├── cors_middleware.py
-│   │   └── static_middleware.py
-│   ├── models
-│   │   ├── db.py
-│   │   ├── dto.py
-│   ├── prod.sh
-│   ├── services
-│   │   ├── jwt_service.py
-│   │   └── user_service.py
-│   ├── static
-│   ├── templates
-│   │   └── main.jinja
-│   └── utils
-│       ├── background_schedule_task.py
-│       ├── bcrypt_hashing.py
-│       ├── dependencies.py
-│       ├── formating.py
-│       ├── lifespan.py
-│       └── sha256_hashing.py
-├── docker-compose.yml
-├── Dockerfile
-├── install_env.sh
-├── LICENSE
-├── README.md
-└── requirements.txt
+.
+├── controllers/                # Handles route logic
+│   ├── api/                    # API routes
+│   └── pages/                  # Page-rendering controllers for frontend views
+├── core/                       # Core application configuration and lifecycle
+│   ├── middlewares/            # Custom middlewares
+│   └── security/               # Security and auth logic
+├── db_init.py                  # Script to initialize database schema
+├── exceptions/                 # Custom exception handling
+├── infrastructure/             # External services/integration layers
+├── main.py                     # Application entry point
+├── mappers/                    # Transforms between models and DTOs
+├── migration_manager.sh        # Helper script for Alembic migrations
+├── migrations/                 # Alembic migration folder
+├── models/                     # Data schemas and enums
+├── repos/                      # Data access layer (repositories)
+├── schedulers/                 # Background task runners
+├── services/                   # Business logic layer
+├── static/                     # Static files (CSS, JS, images)
+├── templates/                  # HTML templates rendered via Jinja2
+├── utils/                      # Helper functions and shared utilities
+└── views/                      # Rendered page views logic
 ```
 
 ## Getting Started
